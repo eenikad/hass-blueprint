@@ -11,12 +11,16 @@ blueprint:
       name: Taster Hoch (binary_sensor)
       selector:
         entity:
-          domain: binary_sensor
+          domain:
+            - binary_sensor
+            - switch
     taster_runter:
       name: Taster Runter (binary_sensor)
       selector:
         entity:
-          domain: binary_sensor
+          domain:
+            - binary_sensor
+            - switch
     jalousie:
       name: Jalousie (cover)
       selector:
