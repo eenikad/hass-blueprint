@@ -1,0 +1,172 @@
+blueprint:
+  name: Jalousie mit zwei Tastern (kurz/lang)
+  description: >
+    Steuerung einer Jalousie mit zwei Tastern:
+    - Kurzer Druck: Jalousie fährt auf definierte Position (hoch/runter)
+    - Langer Druck (≥2s): Jalousie fährt hoch oder runter, 
+      beim Loslassen wird gestoppt
+  domain: automation
+  input:
+    taster_hoch:
+      name: Taster Hoch (binary_sensor)
+      selector:
+        entity:
+          domain: binary_sensor
+    taster_runter:
+      name: Taster Runter (binary_sensor)
+      selector:
+        entity:
+          domain: binary_sensor
+    jalousie:
+      name: Jalousie (cover)
+      selector:
+        entity:
+          domain: cover
+    position_hoch:
+      name: Position bei kurzem Druck "Hoch"
+      default: 20
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    position_runter:
+      name: Position bei kurzem Druck "Runter"
+      default: 80
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+    helper_hoch:
+      name: Hilfs-Schalter Hoch (input_boolean)
+      selector:
+        entity:
+          domain: input_boolean
+    helper_runter:
+      name: Hilfs-Schalter Runter (input_boolean)
+      selector:
+        entity:
+          domain: input_boolean
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input taster_hoch
+    to: "on"
+    id: hoch_pressed
+  - platform: state
+    entity_id: !input taster_hoch
+    to: "off"
+    id: hoch_released
+  - platform: state
+    entity_id: !input taster_runter
+    to: "on"
+    id: runter_pressed
+  - platform: state
+    entity_id: !input taster_runter
+    to: "off"
+    id: runter_released
+
+variables:
+  taster_hoch: !input taster_hoch
+  taster_runter: !input taster_runter
+  jalousie: !input jalousie
+  position_hoch: !input position_hoch
+  position_runter: !input position_runter
+  helper_hoch: !input helper_hoch
+  helper_runter: !input helper_runter
+
+action:
+  - choose:
+
+      # LANGDRUCK HOCH
+      - conditions:
+          - condition: trigger
+            id: hoch_pressed
+        sequence:
+          - delay: "00:00:02"
+          - condition: state
+            entity_id: !input taster_hoch
+            state: "on"
+          - service: input_boolean.turn_on
+            target:
+              entity_id: !input helper_hoch
+          - service: cover.open_cover
+            target:
+              entity_id: !input jalousie
+
+      # LANGDRUCK RUNTER
+      - conditions:
+          - condition: trigger
+            id: runter_pressed
+        sequence:
+          - delay: "00:00:02"
+          - condition: state
+            entity_id: !input taster_runter
+            state: "on"
+          - service: input_boolean.turn_on
+            target:
+              entity_id: !input helper_runter
+          - service: cover.close_cover
+            target:
+              entity_id: !input jalousie
+
+      # LOSLASSEN NACH LANGDRUCK HOCH
+      - conditions:
+          - condition: trigger
+            id: hoch_released
+          - condition: state
+            entity_id: !input helper_hoch
+            state: "on"
+        sequence:
+          - service: cover.stop_cover
+            target:
+              entity_id: !input jalousie
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input helper_hoch
+
+      # LOSLASSEN NACH LANGDRUCK RUNTER
+      - conditions:
+          - condition: trigger
+            id: runter_released
+          - condition: state
+            entity_id: !input helper_runter
+            state: "on"
+        sequence:
+          - service: cover.stop_cover
+            target:
+              entity_id: !input jalousie
+          - service: input_boolean.turn_off
+            target:
+              entity_id: !input helper_runter
+
+      # KURZER DRUCK HOCH
+      - conditions:
+          - condition: trigger
+            id: hoch_released
+          - condition: state
+            entity_id: !input helper_hoch
+            state: "off"
+        sequence:
+          - service: cover.set_cover_position
+            data:
+              position: !input position_hoch
+            target:
+              entity_id: !input jalousie
+
+      #  KURZER DRUCK RUNTER
+      - conditions:
+          - condition: trigger
+            id: runter_released
+          - condition: state
+            entity_id: !input helper_runter
+            state: "off"
+        sequence:
+          - service: cover.set_cover_position
+            data:
+              position: !input position_runter
+            target:
+              entity_id: !input jalousie
