@@ -1,0 +1,76 @@
+blueprint:
+  name: Color Breathing Effect
+  description: Smoothly cycles brightness and color on a group of lights.
+  domain: script
+  input:
+    light_targets:
+      name: Light Entities
+      description: The lights to apply the breathing effect to
+      selector:
+        target:
+          entity:
+            domain: light
+
+    cycle_speed:
+      name: Speed (seconds)
+      description: Time for one up/down fade + color shift
+      default: 6
+      selector:
+        number:
+          min: 2
+          max: 30
+          unit_of_measurement: seconds
+          step: 1
+
+    brightness_low:
+      name: Minimum Brightness
+      default: 50
+      selector:
+        number:
+          min: 1
+          max: 254
+          step: 1
+
+    brightness_high:
+      name: Maximum Brightness
+      default: 254
+      selector:
+        number:
+          min: 1
+          max: 254
+          step: 1
+
+mode: restart
+sequence:
+  - repeat:
+      while:
+        - condition: template
+          value_template: true
+      sequence:
+        - variables:
+            cycle_speed_val: !input cycle_speed
+            brightness_high_val: !input brightness_high
+        - variables:
+            transition_val: "{{ (cycle_speed_val / 2) | int }}"
+            hue_color_1: "{{ [range(0, 360) | random, 100] }}"
+        - service: light.turn_on
+          data:
+            target: !input light_targets
+            hs_color: "{{ hue_color_1 }}"
+            brightness: "{{ brightness_high_val }}"
+            transition: "{{ transition_val }}"
+        - delay:
+            seconds: "{{ transition_val }}"
+
+        - variables:
+            brightness_low_val: !input brightness_low
+        - variables:
+            hue_color_2: "{{ [range(0, 360) | random, 100] }}"
+        - service: light.turn_on
+          data:
+            target: !input light_targets
+            hs_color: "{{ hue_color_2 }}"
+            brightness: "{{ brightness_low_val }}"
+            transition: "{{ transition_val }}"
+        - delay:
+            seconds: "{{ transition_val }}"
