@@ -7,9 +7,9 @@ blueprint:
       name: Light Entities
       description: The lights to apply the breathing effect to
       selector:
-        target:
-          entity:
-            domain: light
+        entity:
+          domain: light
+          multiple: true
 
     cycle_speed:
       name: Speed (seconds)
@@ -54,8 +54,8 @@ sequence:
             transition_val: "{{ (cycle_speed_val / 2) | int }}"
             hue_color_1: "{{ [range(0, 360) | random, 100] }}"
         - service: light.turn_on
+          target: !input light_targets
           data:
-            target: !input light_targets
             hs_color: "{{ hue_color_1 }}"
             brightness: "{{ brightness_high_val }}"
             transition: "{{ transition_val }}"
@@ -64,11 +64,10 @@ sequence:
 
         - variables:
             brightness_low_val: !input brightness_low
-        - variables:
             hue_color_2: "{{ [range(0, 360) | random, 100] }}"
         - service: light.turn_on
+          target: !input light_targets
           data:
-            target: !input light_targets
             hs_color: "{{ hue_color_2 }}"
             brightness: "{{ brightness_low_val }}"
             transition: "{{ transition_val }}"
