@@ -50,26 +50,5 @@ sequence:
         - variables:
             cycle_speed_val: !input cycle_speed
             brightness_high_val: !input brightness_high
-        - variables:
-            transition_val: "{{ (cycle_speed_val / 2) | int }}"
-            hue_color_1: "{{ [range(0, 360) | random, 100] }}"
-        - service: light.turn_on
-          target: !input light_targets
-          data:
-            hs_color: "{{ hue_color_1 }}"
-            brightness: "{{ brightness_high_val }}"
-            transition: "{{ transition_val }}"
-        - delay:
-            seconds: "{{ transition_val }}"
-
-        - variables:
             brightness_low_val: !input brightness_low
-            hue_color_2: "{{ [range(0, 360) | random, 100] }}"
-        - service: light.turn_on
-          target: !input light_targets
-          data:
-            hs_color: "{{ hue_color_2 }}"
-            brightness: "{{ brightness_low_val }}"
-            transition: "{{ transition_val }}"
-        - delay:
-            seconds: "{{ transition_val }}"
+            transition_val: "{{ (cycle_speed_val / 2) | int }}_
